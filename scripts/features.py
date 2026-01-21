@@ -1,44 +1,57 @@
 import pandas as pd
 
-# Load the raw 90-day hourly air pollution data for Karachi
-# Ensure the file 'karachi_pollution_hourly.csv' is in your current directory
-df = pd.read_csv('data/karachi_pollution_hourly.csv')
+def create_features(file_path):
+    # 1. Load your raw data
+    df = pd.read_csv(file_path)
+    
+    # 2. Sort by time to ensure calculations (lags) are correct
+    # (We need the datetime to sort, but we will drop it later)
+    df['Date_Time'] = pd.to_datetime(df['Date_Time'])
+    df = df.sort_values('Date_Time')
+    
+    # 3. Time-based Features (As per PDF)
+    df['hour'] = df['Date_Time'].dt.hour
+    df['day_of_week'] = df['Date_Time'].dt.dayofweek
+    
+    # 4. Memory Features (Lags)
+    # We use US_AQI from raw data to create these, then rename later
+    df['aqi_lag_1h'] = df['US_AQI'].shift(1)
+    df['aqi_lag_24h'] = df['US_AQI'].shift(24)
+    
+    # 5. Derived Feature (As per PDF)
+    df['aqi_change_rate'] = df['US_AQI'].diff()
+    
+    # 6. Rename US_AQI to aqi as requested
+    df = df.rename(columns={'US_AQI': 'aqi'})
+    
+    # 7. Select only the relevant features (Excluding Date_Time)
+    selected_columns = [
+        'hour', 
+        'day_of_week', 
+        'aqi_lag_1h', 
+        'aqi_lag_24h', 
+        'aqi_change_rate', 
+        'Wind_Speed_kmh', 
+        'PM2.5_ugm3', 
+        'aqi'  # This is the renamed target
+    ]
+    
+    feature_df = df[selected_columns]
+    
+    # 8. Clean up
+    # Dropping rows where lags are empty (the first 24 hours)
+    feature_df = feature_df.dropna()
+    
+    return feature_df
 
-# 1. Convert Date_Time to a datetime object and sort to ensure time continuity
-df['Date_Time'] = pd.to_datetime(df['Date_Time'])
-df = df.sort_values('Date_Time')
-
-# 2. FEATURE ENGINEERING
-
-# Feature A: Hour of the Day (0-23)
-# Captured because air pollution in Karachi follows a diurnal cycle (peaks at night/morning)
-df['Hour'] = df['Date_Time'].dt.hour
-
-# Feature B: Day of the Week (0=Monday, 6=Sunday)
-# Captured to account for lower industrial/traffic emissions on weekends
-df['Day_of_Week'] = df['Date_Time'].dt.dayofweek
-
-# Feature C: AQI Last Hour (Lag 1)
-# Captured because air quality is "persistent" (if it's bad now, it's usually bad in an hour)
-df['AQI_last_hour'] = df['AQI'].shift(1)
-
-# Feature D: AQI Last 24 Hours (Lag 24)
-# Captured to catch the pattern of what the air was like at this exact time yesterday
-df['AQI_last_24h'] = df['AQI'].shift(24)
-
-# Feature E: Current AQI
-# This remains in the dataset as your "Target" (Y) for training models
-
-# 3. CLEANUP
-# Shift operations create 'NaN' (empty) values for the first few rows (e.g., first 24 hours).
-# We remove these to ensure the model only learns from complete data points.
-final_df = df[['Date_Time', 'Hour', 'Day_of_Week', 'AQI_last_hour', 'AQI_last_24h', 'AQI']].dropna()
-
-# 4. SAVE THE ENGINEERED DATASET
-final_df.to_csv('data/features.csv', index=False)
-
-print("Feature Engineering Complete!")
-print(f"File saved as: karachi_prediction_ready.csv")
-print(f"Total records ready for training: {len(final_df)}")
-print("\nPreview of the engineered data:")
-print(final_df.head())
+# Run the script
+if __name__ == "__main__":
+    data_path = 'karachi_actual_historical_data.csv'
+    final_features = create_features(data_path)
+    
+    # Save the final cleaned version
+    final_features.to_csv('karachi_final_features.csv', index=False)
+    
+    print("✅ Feature Table Modified Successfully!")
+    print("Columns in file:", final_features.columns.tolist())
+    print(final_features.head())

@@ -1,63 +1,66 @@
 import requests
-import datetime
-import time
-import csv
+import pandas as pd
+from datetime import datetime, timedelta
 
-# --- CONFIGURATION ---
-API_KEY = "312b4836ceff4d1d77eaec2597a2d8a7"
-LAT = 24.8607  # Karachi
-LON = 67.0011
+# 1. Configuration for Karachi
+LAT, LON = 24.8607, 67.0011
+TIMEZONE = "Asia/Karachi"
 
-# Calculate Unix timestamps for the last 90 days
-end_time = int(time.time())
-start_time = end_time - (90 * 24 * 60 * 60)
+# 2. Define Date Range (Last 60 days)
+end_date = datetime.now().strftime('%Y-%m-%d')
+start_date = (datetime.now() - timedelta(days=60)).strftime('%Y-%m-%d')
+current_hour_str = datetime.now().strftime('%Y-%m-%dT%H:00')
 
-url = f"http://api.openweathermap.org/data/2.5/air_pollution/history?lat={LAT}&lon={LON}&start={start_time}&end={end_time}&appid={API_KEY}"
+def get_karachi_data():
+    print(f"Fetching data from {start_date} to {end_date}...")
 
-def save_pollution_data():
-    try:
-        response = requests.get(url)
-        response.raise_for_status()
-        data = response.json()
-        
-        filename = "karachi_pollution_hourly.csv"
-        records = data.get('list', [])
-        
-        if not records:
-            print("No data found.")
-            return
+    # --- A. Fetch Weather Data (Bulk) ---
+    weather_url = (
+        f"https://archive-api.open-meteo.com/v1/archive?"
+        f"latitude={LAT}&longitude={LON}&start_date={start_date}&end_date={end_date}"
+        f"&hourly=temperature_2m,relative_humidity_2m,wind_speed_10m,surface_pressure"
+        f"&timezone={TIMEZONE}"
+    )
+    w_res = requests.get(weather_url).json()
+    w_data = w_res['hourly']
 
-        # Column Headers
-        headers = ['Date_Time', 'AQI', 'CO', 'NO', 'NO2', 'O3', 'SO2', 'PM2_5', 'PM10', 'NH3']
+    # --- B. Fetch Air Quality Data (Bulk) ---
+    aq_url = (
+        f"https://air-quality-api.open-meteo.com/v1/air-quality?"
+        f"latitude={LAT}&longitude={LON}&start_date={start_date}&end_date={end_date}"
+        f"&hourly=pm2_5,pm10,nitrogen_dioxide,carbon_monoxide,sulphur_dioxide,ozone,us_aqi"
+        f"&timezone={TIMEZONE}"
+    )
+    aq_res = requests.get(aq_url).json()
+    aq_data = aq_res['hourly']
 
-        with open(filename, mode='w', newline='') as file:
-            writer = csv.writer(file)
-            writer.writerow(headers)
+    # --- C. Combine into a Single DataFrame ---
+    df = pd.DataFrame({
+        'Date_Time': w_data['time'],
+        'Temp_C': w_data['temperature_2m'],
+        'Humidity_%': w_data['relative_humidity_2m'],
+        'Wind_Speed_kmh': w_data['wind_speed_10m'],
+        'Pressure_hPa': w_data['surface_pressure'],
+        'US_AQI': aq_data['us_aqi'],
+        'PM2.5_ugm3': aq_data['pm2_5'],
+        'PM10_ugm3': aq_data['pm10'],
+        'NO2_ugm3': aq_data['nitrogen_dioxide'],
+        'CO_ugm3': aq_data['carbon_monoxide'],
+        'SO2_ugm3': aq_data['sulphur_dioxide'],
+        'O3_ugm3': aq_data['ozone']
+    })
 
-            for entry in records:
-                # Format: Year-Month-Day Hour:Minute (e.g., 2026-01-11 13:00)
-                # No raw Unix timestamp included
-                clean_date_time = datetime.datetime.fromtimestamp(entry['dt']).strftime('%Y-%m-%d %H:%M')
-                
-                comp = entry['components']
-                
-                writer.writerow([
-                    clean_date_time, 
-                    entry['main']['aqi'],
-                    comp.get('co'), 
-                    comp.get('no'), 
-                    comp.get('no2'),
-                    comp.get('o3'), 
-                    comp.get('so2'), 
-                    comp.get('pm2_5'),
-                    comp.get('pm10'), 
-                    comp.get('nh3')
-                ])
+    # --- D. Filter out Forecasted (Future) Data ---
+    # The API often returns data until the end of the current day.
+    # This line keeps only the rows that have already happened.
+    df = df[df['Date_Time'] <= current_hour_str]
 
-        print(f"Success! Saved {len(records)} hourly rows to {filename}")
-
-    except Exception as e:
-        print(f"Error: {e}")
+    # --- E. Save to CSV ---
+    filename = 'karachi_actual_historical_data.csv'
+    df.to_csv(filename, index=False)
+    
+    print(f"Success! Saved {len(df)} rows of actual data to {filename}")
+    print(f"Latest entry in CSV: {df['Date_Time'].iloc[-1]}")
 
 if __name__ == "__main__":
-    save_pollution_data()
+    get_karachi_data()
