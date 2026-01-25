@@ -2,17 +2,17 @@ name: Karachi AQI CI/CD Pipeline
 
 on:
   schedule:
-    - cron: '0 * * * *'  # Hourly data sync
-    - cron: '0 0 * * *'  # Daily RF training
-  workflow_dispatch:      # Manual run button
+    - cron: '0 * * * *'   # Hourly features
+    - cron: '0 0 * * *'   # Daily training
+  workflow_dispatch:
 
 jobs:
   run-aqi-system:
     runs-on: ubuntu-latest
-    
+
     env:
       MONGO_URI: ${{ secrets.MONGO_URI }}
-      DAGSHUB_USERNAME: ${{ secrets.DAGSHUB_USERNAME }}
+      DAGSHUB_USER: ${{ secrets.DAGSHUB_USERNAME }}
       DAGSHUB_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
 
     steps:
@@ -26,23 +26,20 @@ jobs:
 
       - name: Install Libraries
         run: |
-          pip install pandas numpy requests pymongo mlflow dagshub joblib scikit-learn certifi nbconvert
+          pip install pandas numpy requests pymongo mlflow dagshub joblib scikit-learn certifi jupyter
 
-      # Runs hourly
+      # Hourly Feature Pipeline
       - name: Sync Features to MongoDB
-        if: github.event_name == 'schedule' && github.event.schedule == '0 * * * *' || github.event_name == 'workflow_dispatch'
+        if: (github.event_name == 'schedule' && github.event.schedule == '0 * * * *') || github.event_name == 'workflow_dispatch'
         run: |
           python scripts/extraction.py
           python scripts/features.py
           python scripts/mongodb_connect.py
 
-      # Runs daily
+      # Daily Training Pipeline
       - name: Retrain Random Forest & Register
-        if: github.event_name == 'schedule' && github.event.schedule == '0 0 * * *' || github.event_name == 'workflow_dispatch'
+        if: (github.event_name == 'schedule' && github.event.schedule == '0 0 * * *') || github.event_name == 'workflow_dispatch'
         run: |
-          # Convert Notebook to a Python script first
           jupyter nbconvert --to python Training_only_randomforest.ipynb
-          # Run the converted script
           python Training_only_randomforest.py
-          # Register to DagsHub
           python scripts/register_model_to_dagshub.py
