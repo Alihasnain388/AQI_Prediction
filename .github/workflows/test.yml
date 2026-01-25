@@ -44,3 +44,4 @@ jobs:
           python Training_only_randomforest.py
           python scripts/register_model_to_dagshub.py
           jupyter nbconvert --to python Prediction.ipynb
+          python Prediction.py
