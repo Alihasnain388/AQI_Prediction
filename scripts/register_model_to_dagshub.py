@@ -12,14 +12,14 @@ DAGSHUB_TOKEN = os.getenv("DAGSHUB_TOKEN")
 if not DAGSHUB_USER or not DAGSHUB_TOKEN:
     raise EnvironmentError("❌ DagsHub credentials not found in environment")
 
-os.environ["MLFLOW_TRACKING_USERNAME"] = DAGSHUB_USER
+os.environ["MLFLOW_TRACKING_USERNAME"] = DAGSHUB_USERNAME
 os.environ["MLFLOW_TRACKING_PASSWORD"] = DAGSHUB_TOKEN
 
 # -------------------------------------------------
 # 2. Set MLflow Tracking URI (THIS IS THE KEY)
 # -------------------------------------------------
 mlflow.set_tracking_uri(
-    f"https://dagshub.com/{DAGSHUB_USER}/AQI_Model.mlflow"
+    f"https://dagshub.com/{DAGSHUB_USERNAME}/AQI_Model.mlflow"
 )
 
 mlflow.set_experiment("Karachi_AQI_Production")
