@@ -6,7 +6,7 @@ import joblib
 # -------------------------------
 # 1. Force credentials
 # -------------------------------
-os.environ["MLFLOW_TRACKING_USERNAME"] = os.environ["DAGSHUB_USER"]
+os.environ["MLFLOW_TRACKING_USERNAME"] = os.environ["DAGSHUB_USERNAME"]
 os.environ["MLFLOW_TRACKING_PASSWORD"] = os.environ["DAGSHUB_TOKEN"]
 
 # -------------------------------
