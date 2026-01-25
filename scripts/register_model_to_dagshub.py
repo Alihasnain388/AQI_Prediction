@@ -1,35 +1,33 @@
-import os
-import dagshub
 import mlflow
 import mlflow.sklearn
 import joblib
+import os
 
-# 1. Provide credentials to environment so it doesn't ask for a browser login
-os.environ['MLFLOW_TRACKING_USERNAME'] = os.getenv("DAGSHUB_USERNAME")
-os.environ['MLFLOW_TRACKING_PASSWORD'] = os.getenv("DAGSHUB_TOKEN")
+# 1. Capture credentials from the Environment (GitHub Secrets)
+repo_owner = os.getenv("DAGSHUB_USERNAME")
+repo_name = "AQI_Model"
+token = os.getenv("DAGSHUB_TOKEN")
 
-# 2. Init DagsHub (it will now see the environment variables and skip the prompt)
-dagshub.init(
-    repo_owner="Alihasnain388",
-    repo_name="AQI_Model",
-    mlflow=True
-)
+# 2. MANUALLY configure MLflow (The "Silent" Way)
+# This forces MLflow to use your token and skip the DagsHub login prompt
+os.environ['MLFLOW_TRACKING_USERNAME'] = repo_owner
+os.environ['MLFLOW_TRACKING_PASSWORD'] = token
+tracking_uri = f"https://dagshub.com/{repo_owner}/{repo_name}.mlflow"
+mlflow.set_tracking_uri(tracking_uri)
 
-# -----------------------------
-# 3. Load local model + scaler
-# -----------------------------
-# Verify files exist before loading
-if not os.path.exists("Random_Forest_model.pkl") or not os.path.exists("scaler.pkl"):
-    raise FileNotFoundError("Critical model files (.pkl) are missing from the runner!")
+print(f"🚀 Connecting to DagsHub MLflow at: {tracking_uri}")
 
-model = joblib.load("Random_Forest_model.pkl")
+# 3. Load local artifacts saved by the training script
+model_path = "Random_Forest_model.pkl"
 scaler_path = "scaler.pkl"
 
-# -----------------------------
-# 4. Log EVERYTHING properly
-# -----------------------------
-with mlflow.start_run(run_name="AQI_Model_FINAL_UPLOAD"):
+if not os.path.exists(model_path):
+    raise FileNotFoundError(f"❌ {model_path} not found! Check training logs.")
 
+model = joblib.load(model_path)
+
+# 4. Log and Register
+with mlflow.start_run(run_name="Automated_RF_Training"):
     # Log the model and register it in the DagsHub Model Registry
     mlflow.sklearn.log_model(
         sk_model=model,
@@ -37,13 +35,9 @@ with mlflow.start_run(run_name="AQI_Model_FINAL_UPLOAD"):
         registered_model_name="Karachi_AQI_Model"
     )
 
-    # Log scaler INSIDE model folder so they stay together
-    mlflow.log_artifact(
-        scaler_path,
-        artifact_path="model"
-    )
+    # Log scaler inside the same folder
+    if os.path.exists(scaler_path):
+        mlflow.log_artifact(scaler_path, artifact_path="model")
 
     mlflow.log_param("model_type", "RandomForest")
-    mlflow.log_param("scaler", "StandardScaler")
-
-print("✅ Model + scaler uploaded and registered to DagsHub successfully!")
+    print("✅ Model + Scaler registered to DagsHub successfully!")
