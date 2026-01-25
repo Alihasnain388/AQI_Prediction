@@ -12,7 +12,7 @@ jobs:
 
     env:
       MONGO_URI: ${{ secrets.MONGO_URI }}
-      DAGSHUB_USER: ${{ secrets.DAGSHUB_USERNAME }}
+      DAGSHUB_USERNAME: ${{ secrets.DAGSHUB_USERNAME }}
       DAGSHUB_TOKEN: ${{ secrets.DAGSHUB_TOKEN }}
 
     steps:
@@ -26,11 +26,11 @@ jobs:
 
       - name: Install Libraries
         run: |
-          pip install pandas numpy requests pymongo mlflow joblib scikit-learn certifi jupyter
+          pip install pandas numpy requests pymongo mlflow dagshub joblib scikit-learn certifi jupyter
 
       # Hourly Feature Pipeline
       - name: Sync Features to MongoDB
-        if: (github.event_name == 'schedule' && github.event.schedule == '0 * * * *') || github.event_name == 'workflow_dispatch'
+        if: github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
         run: |
           python scripts/extraction.py
           python scripts/features.py
@@ -38,7 +38,7 @@ jobs:
 
       # Daily Training Pipeline
       - name: Retrain Random Forest & Register
-        if: (github.event_name == 'schedule' && github.event.schedule == '0 0 * * *') || github.event_name == 'workflow_dispatch'
+        if: github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
         run: |
           jupyter nbconvert --to python Training_only_randomforest.ipynb
           python Training_only_randomforest.py
