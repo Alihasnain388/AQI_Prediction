@@ -1,23 +1,16 @@
+import os
 import dagshub
 import mlflow
 import mlflow.sklearn
 import joblib
-import os
 
-# 1. FORCE non-interactive mode
-# This tells DagsHub to use these tokens instead of asking for a browser
-token = os.getenv("DAGSHUB_TOKEN")
-username = os.getenv("DAGSHUB_USERNAME")
+# 1. Provide credentials to environment so it doesn't ask for a browser login
+os.environ['MLFLOW_TRACKING_USERNAME'] = os.getenv("DAGSHUB_USERNAME")
+os.environ['MLFLOW_TRACKING_PASSWORD'] = os.getenv("DAGSHUB_TOKEN")
 
-os.environ['MLFLOW_TRACKING_USERNAME'] = username
-os.environ['MLFLOW_TRACKING_PASSWORD'] = token
-
-# 2. Set the tracking URI MANUALLY (This is the "Silent" way)
-mlflow.set_tracking_uri(f"https://dagshub.com/{username}/AQI_Model.mlflow")
-
-# 3. Init DagsHub - Use 'force=True' to override any cached logins
+# 2. Init DagsHub (it will now see the environment variables and skip the prompt)
 dagshub.init(
-    repo_owner=username,
+    repo_owner="Alihasnain388",
     repo_name="AQI_Model",
     mlflow=True
 )
