@@ -1,40 +1,39 @@
 import os
-
-# -------------------------------------------------
-# 1. Read credentials from ENV (CI/CD SAFE)
-# -------------------------------------------------
-os.environ["MLFLOW_TRACKING_USERNAME"] = os.getenv("DAGSHUB_USERNAME")
-os.environ["MLFLOW_TRACKING_PASSWORD"] = os.getenv("DAGSHUB_TOKEN")
-
-import dagshub
 import mlflow
 import mlflow.sklearn
 import joblib
 
 # -------------------------------------------------
-# 2. Connect to DagsHub MLflow
+# 1. Auth via ENV (NO BROWSER, CI/CD SAFE)
 # -------------------------------------------------
-dagshub.init(
-    repo_owner="Alihasnain388",
-    repo_name="AQI_Model",
-    mlflow=True
+DAGSHUB_USER = os.getenv("DAGSHUB_USERNAME")
+DAGSHUB_TOKEN = os.getenv("DAGSHUB_TOKEN")
+
+if not DAGSHUB_USER or not DAGSHUB_TOKEN:
+    raise EnvironmentError("❌ DagsHub credentials not found in environment")
+
+os.environ["MLFLOW_TRACKING_USERNAME"] = DAGSHUB_USER
+os.environ["MLFLOW_TRACKING_PASSWORD"] = DAGSHUB_TOKEN
+
+# -------------------------------------------------
+# 2. Set MLflow Tracking URI (THIS IS THE KEY)
+# -------------------------------------------------
+mlflow.set_tracking_uri(
+    f"https://dagshub.com/{DAGSHUB_USER}/AQI_Model.mlflow"
 )
+
+mlflow.set_experiment("Karachi_AQI_Production")
 
 # -------------------------------------------------
 # 3. Load trained artifacts
 # -------------------------------------------------
-model_path = "Random_Forest_model.pkl"
+model = joblib.load("Random_Forest_model.pkl")
 scaler_path = "scaler.pkl"
 
-if not os.path.exists(model_path):
-    raise FileNotFoundError(f"❌ {model_path} not found")
-
-model = joblib.load(model_path)
-
 # -------------------------------------------------
-# 4. Log & Register Model + Scaler
+# 4. Log & Register
 # -------------------------------------------------
-with mlflow.start_run(run_name="Random_Forest_with_Scaler"):
+with mlflow.start_run(run_name="RF_AQI_Auto_Retrain"):
 
     mlflow.sklearn.log_model(
         sk_model=model,
@@ -45,7 +44,7 @@ with mlflow.start_run(run_name="Random_Forest_with_Scaler"):
     if os.path.exists(scaler_path):
         mlflow.log_artifact(scaler_path, artifact_path="model")
 
-    mlflow.log_param("model_type", "RandomForest")
-    mlflow.log_param("training_source", "MongoDB latest features")
+    mlflow.log_param("training_type", "automated_ci_cd")
+    mlflow.log_param("data_source", "latest_mongodb_features")
 
-print("🚀 Model & Scaler safely registered on DagsHub")
+print("✅ CI/CD Model Registration Successful")
