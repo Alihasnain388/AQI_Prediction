@@ -50,7 +50,7 @@ def get_latest_data():
     mongo_uri = os.getenv("MONGO_URI", "mongodb+srv://ali321hasnain_db_user:etRWe1e6ASFlpwEO@cluster0.1eklm6h.mongodb.net/?appName=Cluster0")
     mongo_client = MongoClient(mongo_uri)
     db = mongo_client["AQIPredictionSystem"]
-    return db["karachi_features"].find_one(sort=[("timestamp", -1)])
+    return db["karachi_features"].find_one(sort=[("_id", -1)])
 
 # 4. DASHBOARD INTERFACE
 st.title("🌤️ Karachi AQI Real-Time Monitor")
