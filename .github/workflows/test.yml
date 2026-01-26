@@ -2,9 +2,9 @@ name: Karachi AQI CI/CD Pipeline
 
 on:
   schedule:
-    - cron: '0 * * * *'   # Hourly features
-    - cron: '0 0 * * *'   # Daily training
-  workflow_dispatch:
+    - cron: '0 * * * *'   # Every Hour
+    - cron: '0 0 * * *'   # Every Day at Midnight
+  workflow_dispatch:      # Allows you to click "Run Workflow" manually
 
 jobs:
   run-aqi-system:
@@ -26,22 +26,21 @@ jobs:
 
       - name: Install Libraries
         run: |
-          pip install pandas numpy requests pymongo mlflow dagshub joblib scikit-learn certifi jupyter
+          pip install pandas numpy requests pymongo mlflow dagshub joblib scikit-learn==1.7.2 certifi jupyter
 
-      # Hourly Feature Pipeline
+      # STEP 1: HOURLY FEATURE PIPELINE
+      # This runs every time the workflow is triggered (hourly and daily)
       - name: Sync Features to MongoDB
-        if: github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
         run: |
           python scripts/extraction.py
           python scripts/features.py
           python scripts/mongodb_connect.py
 
-      # Daily Training Pipeline
+      # STEP 2: DAILY TRAINING PIPELINE
+      # CRITICAL FIX: Only runs if the trigger is 'workflow_dispatch' OR the midnight schedule
       - name: Retrain Random Forest & Register
-        if: github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
+        if: github.event_name == 'workflow_dispatch' || github.event.schedule == '0 0 * * *'
         run: |
           jupyter nbconvert --to python Training_only_randomforest.ipynb
           python Training_only_randomforest.py
           python scripts/register_model_to_dagshub.py
-          jupyter nbconvert --to python Prediction.ipynb
-          python Prediction.py
