@@ -21,7 +21,7 @@ jobs:
           python-version: '3.10'
 
       - run: |
-          pip install pandas numpy pymongo mlflow joblib scikit-learn jupyter certifi
+          pip install pandas numpy pymongo mlflow joblib scikit-learn jupyter certifi shap
           jupyter nbconvert --to python Training_only_randomforest.ipynb
           python Training_only_randomforest.py
           python scripts/register_model_to_dagshub.py
