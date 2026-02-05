@@ -63,7 +63,7 @@ def get_latest_data():
     return db["karachi_features"].find_one(sort=[("_id", -1)])
 
 # 4. MAIN DASHBOARD LOGIC
-st.markdown("<h1 style='text-align: center; color: #1e3a8a;'>🌤️ Karachi Real-Time AQI Monitor</h1>", unsafe_allow_html=True)
+st.markdown("<h1 style='text-align: center; color: #1e3a8a;'>🌤️ Karachi Real-Time AQI Dashboard</h1>", unsafe_allow_html=True)
 
 try:
     model, scaler, model_ver = load_assets()
@@ -71,7 +71,7 @@ try:
 
     if data:
         # --- SECTION 1: CURRENT STATUS ---
-        curr_aqi = data.get('aqi_lag_1h', 0)
+        curr_aqi = data.get('aqi', 0)
         
         # Helper function for Status & Colors
         def get_aqi_status(val):
