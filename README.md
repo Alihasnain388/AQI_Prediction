@@ -18,6 +18,6 @@ The entire system was automated using CI/CD through GitHub Actions. The feature 
 
 For visualizing AQI, a Streamlit dashboard was developed that fetches the latest feature data from MongoDB and the latest trained model from the DagsHub model registry. The dashboard displays the current AQI, the average AQI for the next three days, and an hourly AQI prediction graph covering a three-day horizon. Different colors are used to represent AQI levels, such as green for good air quality and red for hazardous conditions.
 
-Link: streamlit run "C:/Users/Ali hasnain/OneDrive/Desktop/AQI_Prediction/scripts/dashboard.py"
+Link: https://alihasnain388-aqi-prediction-scriptsdashboard-fep8bd.streamlit.app/
 
 
