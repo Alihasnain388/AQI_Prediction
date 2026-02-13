@@ -2,7 +2,7 @@
 
 Firstly, Raw data like pollutants and weather were extracted from Open Meteo API hourly for last 2 months
 
-Secondly on this raw data EDA was implemented because to evaluate the relation of data with AQI and see which data is impacting AQI alot like wind speed and PM2.5 in my case. These results will help in engineering featurs which is the most important part if you want high accuracy model training and prediction.
+Secondly on this raw data EDA was implemented because to evaluate the relation of data with AQI and see which data is impacting AQI alot like wind speed and PM2.5 in my case. These results will help in engineering features which is the most important part if you want high accuracy model training and prediction.
 
 Using EDA results and nature of project, features were engineered. As it was a time series project so time features were really important as AQI cant change instantly. Most probably last hour AQI will be next hour AQI or little bit up and down but not crazy variance unless their is fireburst as it can change AQI instantly. Features were hour, day of the week, aqi last hour, aqi last day, aqi change rate, windspeed, PM2.5, AQI
 
