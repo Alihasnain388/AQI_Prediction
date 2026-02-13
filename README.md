@@ -20,3 +20,4 @@ For visualizing AQI, a Streamlit dashboard was developed that fetches the latest
 
 Link: streamlit run "C:/Users/Ali hasnain/OneDrive/Desktop/AQI_Prediction/scripts/dashboard.py"
 
+
