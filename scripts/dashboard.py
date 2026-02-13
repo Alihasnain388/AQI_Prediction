@@ -44,7 +44,7 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # 3. ASSET LOADING
-@st.cache_resource
+@st.cache_resource(ttl=300)
 def load_assets():
     client = mlflow.tracking.MlflowClient()
     MODEL_NAME = "Karachi_AQI_Model"
