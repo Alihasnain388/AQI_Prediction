@@ -136,7 +136,7 @@ try:
                       labels={"AQI": "Predicted AQI", "Time": "Future Hour"})
         
         fig.update_layout(hovermode="x unified", plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)")
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
 
     else:
         st.warning("No data found in MongoDB. Ensure your feature pipeline is running.")
