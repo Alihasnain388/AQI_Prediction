@@ -8,3 +8,4 @@ scikit-learn==1.7.2
 matplotlib
 shap
 plotly
+protobuf==3.20.3
