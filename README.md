@@ -4,6 +4,8 @@
 
 An end-to-end machine learning system for predicting the **Air Quality Index (AQI) of Karachi for the next 72 hours (3 days)** using historical pollutant and weather data, automated ML pipelines, feature engineering, experiment tracking, and a real-time Streamlit dashboard.
 
+Link: https://alihasnain388-aqi-prediction-scriptsdashboard-fep8bd.streamlit.app/
+
 ---
 
 ## 🚀 Project Overview
